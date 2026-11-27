@@ -208,17 +208,31 @@ GitHub 上无许可证的公开仓库，默认适用「保留所有权利」，�
 
 **当前状态：已标注来源，等待作者补充许可证，或按你的判断移除该文件。**
 
-### 2. VueTorrent —— GPL-3.0
+### 2. VueTorrent 与 MCP 的关系（容易搞混，特别说明）
 
-[VueTorrent/VueTorrent](https://github.com/VueTorrent/VueTorrent)（7.1k ★，**GPL-3.0**）
+| 项目 | 是什么 | 有没有 MCP |
+| --- | --- | --- |
+| [VueTorrent/VueTorrent](https://github.com/VueTorrent/VueTorrent) | qBittorrent 的**纯前端 WebUI 皮肤**（Vue3 + Vuetify），GPL-3.0 | **没有** |
+| `qbittorrent-mcp` 服务 | 独立的 MCP 服务端，把 qBittorrent WebUI API 包成 MCP 工具 | 是它提供 |
 
-qBittorrent 的 WebUI 皮肤。本仓库：
+**VueTorrent 不含 MCP 能力。** 核实方式：拉官方仓库的完整文件树（425 个文件），路径含 `mcp` 的条目为 **0**。它的定位就是「a WebUI (think of it as a visual skin)」，只调 qBittorrent 的 `/api/v2/*`，不涉及 MCP 协议。
 
-- **不分发它的任何代码**
-- 仅在文档中说明它是可选界面，以及它的 API 行为（登录、`/api/v2/*`）对本项目脚本的影响
-- 如果你把本仓库与 VueTorrent 一起分发，需遵守 GPL-3.0
+两者的真实关系是**并列**，不是包含：
 
-> 注：GPL-3.0 有传染性。但只要只是「调用它的 HTTP API」，不作代码级链接或修改分发，就不构成衍生作品。本项目属于后者。
+```
+qBittorrent  ←── VueTorrent（给人看的网页界面，端口 8080）
+     ↑
+     └────────── qbittorrent-mcp（给 AI 用的 MCP 接口，端口 8081）
+```
+
+- 浏览器打开的是 VueTorrent 皮肤 → 走 qBittorrent WebUI API
+- AI 调的是 MCP 服务 → 也走 qBittorrent WebUI API
+
+**它们都只是 qBittorrent 的两个不同前端**，谁也不是谁的功能。
+
+有些 NAS 应用包会把 VueTorrent 一起打进去（比如飞牛的 qBittorrent 应用，`ui/vuetorrent` 就是内置的），但那是打包行为，不代表 VueTorrent 有 MCP。
+
+> 如果你手上的 MCP 服务确实来自某个整合包，请以该包的说明为准；本项目只依赖它的**接口约定**（见 `docs/01-部署.md`），不依赖它的具体来源。
 
 ### 3. 其余第三方组件
 
