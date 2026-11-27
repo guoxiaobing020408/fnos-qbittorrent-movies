@@ -1,0 +1,6 @@
+interface:
+  display_name: "NAS 电影搜索"
+  short_description: "搜 YTS 并通过 MCP 下载到 NAS 上的 qBittorrent"
+  default_prompt: "使用 $nas-movie-search 搜索一部电影，选合适分辨率并下载到 NAS。"
+policy:
+  allow_implicit_invocation: true
