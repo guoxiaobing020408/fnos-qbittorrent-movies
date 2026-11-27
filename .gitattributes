@@ -1,0 +1,8 @@
+# 统一换行符，避免 Windows 下 checkout 出 CRLF 导致 bash 脚本报 $'\r' 错误
+* text=auto eol=lf
+
+*.sh    text eol=lf
+*.md    text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+LICENSE text eol=lf
