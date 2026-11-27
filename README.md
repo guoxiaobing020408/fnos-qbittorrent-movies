@@ -82,7 +82,7 @@ fnos-cli app config set-authorization-path qbittorrent "/vol3/1000/电影" --per
 
 - 飞牛 fnOS（或其他 NAS，qBittorrent 能跑就行）
 - qBittorrent 5.x
-- 一个 `qbittorrent-mcp` 服务（见 [docs/01-部署.md](docs/01-部署.md)）
+- 一个**带内置 MCP 服务**的 qBittorrent 应用（在应用设置里勾选「启用 MCP 服务」，见 [docs/01-部署.md](docs/01-部署.md)）
 - bash + curl + python3（脚本只用标准库）
 
 ### 配置
@@ -208,43 +208,62 @@ GitHub 上无许可证的公开仓库，默认适用「保留所有权利」，�
 
 **当前状态：已标注来源，等待作者补充许可证，或按你的判断移除该文件。**
 
-### 2. VueTorrent 与 MCP 的关系（容易搞混，特别说明）
+### 2. MCP 从哪来：它是 qBittorrent 应用包的内置功能
 
-| 项目 | 是什么 | 有没有 MCP |
+这一点最容易搞混，先说结论。
+
+**MCP 服务不是 VueTorrent 的功能，而是一个「第三方 qBittorrent fpk 应用包」自带的能力。**
+
+那个应用包（`appName: qbittorrent`，`version: 5.3.1.0`，`manualInstall: true`，非 Docker）把三样东西打在一起：
+
+| 打包内容 | 位置 | 作用 |
 | --- | --- | --- |
-| [VueTorrent/VueTorrent](https://github.com/VueTorrent/VueTorrent) | qBittorrent 的**纯前端 WebUI 皮肤**（Vue3 + Vuetify），GPL-3.0 | **没有** |
-| `qbittorrent-mcp` 服务 | 独立的 MCP 服务端，把 qBittorrent WebUI API 包成 MCP 工具 | 是它提供 |
+| qBittorrent 5.3.1 本体 | `bin/` | 下载器 |
+| VueTorrent 皮肤 | `ui/vuetorrent/` | 给人看的网页界面（8080） |
+| **MCP 服务** | 应用自带进程 | 给 AI 用的接口（8081） |
 
-**VueTorrent 不含 MCP 能力。** 核实方式：拉官方仓库的完整文件树（425 个文件），路径含 `mcp` 的条目为 **0**。它的定位就是「a WebUI (think of it as a visual skin)」，只调 qBittorrent 的 `/api/v2/*`，不涉及 MCP 协议。
+在飞牛里打开这个 qBittorrent 应用，能看到一个 **「MCP 服务设置（AI 客户端接入）」** 的面板，里面有：
 
-两者的真实关系是**并列**，不是包含：
+- ☑ 启用 MCP 服务
+- ☑ 允许高危操作（删除 / 停止 / 开始任务）—— 关掉后 AI 只能看和加任务
+- 服务端口：`8081`
+- Web API Key：`qbt_xxxxxxxx...`（可复制 / 重新生成）
+- MCP 连接地址：`http://<你的地址>:8081/mcp`
+- 客户端配置 JSON 示例
+
+**所以：MCP 是这个应用包作者自己实现的内置功能。** 既不是 VueTorrent 的，也不是某个独立的 MCP 项目。
+
+> 这意味着：**换一个 qBittorrent 应用包（比如应用中心那个 4.6.11），就没有 MCP 了。** 本项目依赖的正是这个内置服务，迁移时要注意。
+
+### 3. VueTorrent 官方仓库里没有 MCP
+
+| 核实项 | 结果 |
+| --- | --- |
+| [VueTorrent/VueTorrent](https://github.com/VueTorrent/VueTorrent) 完整文件树 | 425 个文件，路径含 `mcp` 的 **0 个** |
+| 它的自我定位 | "a WebUI (think of it as a visual skin)"，只调 qBittorrent 的 `/api/v2/*` |
+| 许可证 | GPL-3.0 |
+
+VueTorrent 就是那个应用包里的一块**纯前端皮肤**，和 MCP 是并列关系，不是包含关系：
 
 ```
-qBittorrent  ←── VueTorrent（给人看的网页界面，端口 8080）
-     ↑
-     └────────── qbittorrent-mcp（给 AI 用的 MCP 接口，端口 8081）
+                ┌─ VueTorrent 皮肤 ── 浏览器（8080）
+qBittorrent ────┤
+                └─ MCP 服务 ──────── AI 客户端（8081）
 ```
 
-- 浏览器打开的是 VueTorrent 皮肤 → 走 qBittorrent WebUI API
-- AI 调的是 MCP 服务 → 也走 qBittorrent WebUI API
+两者都只是 qBittorrent 的前端，一个面向人、一个面向 AI。
 
-**它们都只是 qBittorrent 的两个不同前端**，谁也不是谁的功能。
-
-有些 NAS 应用包会把 VueTorrent 一起打进去（比如飞牛的 qBittorrent 应用，`ui/vuetorrent` 就是内置的），但那是打包行为，不代表 VueTorrent 有 MCP。
-
-> 如果你手上的 MCP 服务确实来自某个整合包，请以该包的说明为准；本项目只依赖它的**接口约定**（见 `docs/01-部署.md`），不依赖它的具体来源。
-
-### 3. 其余第三方组件
+### 4. 其余第三方组件
 
 | 组件 | 许可证 | 在本方案里的角色 |
 | --- | --- | --- |
 | **qBittorrent** | GPL-2.0 | 下载器本体 |
-| **`qbittorrent-mcp` 服务** | 以原项目为准 | MCP 服务端，**本仓库不含其源码**，只当客户端 |
+| **内置 MCP 服务** | qBittorrent 应用包作者（第三方 fpk） | 应用自带，端口 8081，在应用设置里开关；**本仓库不含其源码**，只当客户端 |
 | **YTS / YTS API** | 站点服务条款 | 片源元数据，只调公开 API，不镜像不分发影视资源 |
 | **Model Context Protocol** | Anthropic 开源规范 | 通信协议 |
 | **fnos-cli** | 以原项目为准 | 操作飞牛应用授权（可选，也可用飞牛 Web UI） |
 
-### 4. 本仓库原创的部分
+### 5. 本仓库原创的部分
 
 | 文件 | 说明 |
 | --- | --- |
