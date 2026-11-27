@@ -184,115 +184,52 @@ cd skill
 
 ---
 
-## 上游项目与引用说明
+## 参考的两个项目
 
-**先说清楚哪些代码不是我的。**
+这个方案只参考了两个项目，其余都是运行环境里现成的东西。
 
-### 1. `lazycat-movie-search-skill` —— `yts-api.sh` 的出处
+| 项目 | 许可证 | 参考了什么 |
+| --- | --- | --- |
+| [whoamihappyhacking/lazycat-movie-search-skill](https://github.com/whoamihappyhacking/lazycat-movie-search-skill) | **无（见下）** | `yts-api.sh` 的原始实现（我只加了超时重试，diff 7 行）；`SKILL.md` 的章节结构 |
+| [sushazhi/fnos-qbittorrent](https://github.com/sushazhi/fnos-qbittorrent) | GPL-2.0 | **本项目对接的 MCP 服务就是它内置的**，不是我写的 |
 
-[whoamihappyhacking/lazycat-movie-search-skill](https://github.com/whoamihappyhacking/lazycat-movie-search-skill)（37 ★）
+### ⚠️ 第一个项目没有 LICENSE
 
-本仓库的 `skill/scripts/yts-api.sh` **衍生自该项目**，实测对比仅 7 行差异（我增加了 `--connect-timeout` / `--max-time` / `--retry` 三个参数），其余逻辑、参数解析、jq 输出格式均来自上游。
+GitHub 上无许可证 = 保留所有权利，严格说不能复制再分发。`yts-api.sh` 衍生自它，所以本仓库在这一点上有授权瑕疵。
 
-`skill/SKILL.md` 的章节结构也参考了上游，但正文按实际踩坑重写了（上游讲的是 VueTorrent `.lzcx` 通道，本项目讲 qBittorrent MCP）。
+三条路：
 
-**⚠️ 该上游项目没有 LICENSE 文件。**
+1. 找作者补许可证（MIT / Apache-2.0 都行）—— 最正当
+2. 把 `yts-api.sh` 从仓库删掉，文档改成"请从上游获取"—— 只剩原创，合规无虞
+3. 仓库转私有，只自用
 
-GitHub 上无许可证的公开仓库，默认适用「保留所有权利」，严格来说他人**不能直接复制、修改、再分发**。本仓库作为公开项目包含这段衍生代码，存在授权瑕疵。
+**当前状态**：已标注来源，等作者补充许可，或按你的判断移除该文件。
 
-处理建议（按稳妥程度排序）：
+### MCP 的来源（容易搞混）
 
-1. 向原作者提 Issue 请其补充许可证（MIT / Apache-2.0 都行），拿到许可后本仓库直接标注即可
-2. 若不打算联系作者，把 `skill/scripts/yts-api.sh` 从本仓库移除，文档里改成"请从上游项目获取此脚本"——那样本仓库只剩原创部分，合规无虞
-3. 只自用不分发（保持仓库私有）风险最低
-
-**当前状态：已标注来源，等待作者补充许可证，或按你的判断移除该文件。**
-
-### 2. MCP 从哪来：`sushazhi/fnos-qbittorrent` 这个 fpk 包内置的
-
-这一点最容易搞混，先说结论。
-
-**MCP 服务出自 [sushazhi/fnos-qbittorrent](https://github.com/sushazhi/fnos-qbittorrent) 这个飞牛应用包，是该包的作者自己加的功能。**
-
-| 项目 | 值（读取自 fpk 内的 `manifest`） |
-| --- | --- |
-| 项目地址 | https://github.com/sushazhi/fnos-qbittorrent |
-| 包名 / 版本 | `qbittorrent` / `5.3.1.0` |
-| 来源类型 | `source = thirdparty`（第三方手动安装，非应用中心） |
-| 打包分发者 | **yukihana**（GitHub: `sushazhi`） |
-| 上游 | qBittorrent 官方（`maintainer_url = github.com/qbittorrent/qBittorrent`） |
-| 许可证 | **GPL-2.0**（继承 qBittorrent） |
-| 平台 | amd64 / arm64 两个 fpk |
-| 最低系统 | fnOS `1.2.0401` |
-
-包自己的描述里就写明了下述能力：
-
-> 🤖 **MCP AI 接入**：内置 MCP Server，DeepSeek Harness / Hermes / QwenPaw / OpenClaw 等 AI 客户端可直接管理下载任务
-
-这个 fpk 把三样东西打在一起：
+MCP 不在 VueTorrent 里，也不在 qBittorrent 官方代码里。它出自上面第二个项目——那个飞牛 fpk 包把三样东西打在一起：
 
 | 打包内容 | 位置 | 作用 |
 | --- | --- | --- |
 | qBittorrent 5.3.1 本体 | `bin/` | 下载器 |
-| VueTorrent 皮肤 | `ui/vuetorrent/` | 给人看的网页界面（8080） |
+| VueTorrent 皮肤（GPL-3.0，纯前端） | `ui/vuetorrent/` | 给人看的界面（8080） |
 | **MCP Server** | 应用自带进程 | 给 AI 用的接口（8081） |
 
-在飞牛里打开这个 qBittorrent 应用，能看到 **「MCP 服务设置（AI 客户端接入）」** 面板：
+装上后在应用设置里能看到「MCP 服务设置（AI 客户端接入）」：启用开关、允许高危操作、端口 `8081`、Web API Key、连接地址示例。
 
-- ☑ 启用 MCP 服务
-- ☑ 允许高危操作（删除 / 停止 / 开始任务）—— 关掉后 AI 只能看和加任务
-- 服务端口：`8081`
-- Web API Key：`qbt_xxxxxxxx...`（可复制 / 重新生成）
-- MCP 连接地址：`http://<你的地址>:8081/mcp`
-- 客户端配置 JSON 示例
+> ⚠️ 别装应用中心那个 **4.6.11** 版——没有 MCP，本项目所有命令都连不上。
 
-**所以：MCP 是这个 fpk 应用包的功能。** 既不是 VueTorrent 的，也不是某个独立的 MCP 项目，也不是本仓库的。
+### 其余只是运行环境，不算参考
 
-> ⚠️ **换应用包会丢 MCP。** 飞牛应用中心里那个 4.6.11 版的 qBittorrent 就没有这个服务，只有 `sushazhi/fnos-qbittorrent` 这个包带。本项目依赖的正是它，迁移时注意。
+qBittorrent（GPL-2.0，下载器本体）、VueTorrent（GPL-3.0，那个 fpk 里的界面皮肤）、fnOS（运行平台）、Model Context Protocol（协议规范）、YTS（片源 API）、fnos-cli（可选，操作飞牛授权用）。
 
-**本仓库与该包的关系**：只做**客户端**。不包含它的源码、不分发其 fpk、不维护它。该包的问题请去它自己的 [Issues](https://github.com/sushazhi/fnos-qbittorrent/issues) 反馈。
+本仓库不含以上任何一方的源码，也不分发它们的安装包。
 
-### 3. VueTorrent 官方仓库里没有 MCP
+### 本仓库原创
 
-| 核实项 | 结果 |
-| --- | --- |
-| [VueTorrent/VueTorrent](https://github.com/VueTorrent/VueTorrent) 完整文件树 | 425 个文件，路径含 `mcp` 的 **0 个** |
-| 它的自我定位 | "a WebUI (think of it as a visual skin)"，只调 qBittorrent 的 `/api/v2/*` |
-| 许可证 | GPL-3.0 |
+`skill/scripts/qb-mcp.sh`（MCP 客户端封装，含 14 条坑的处理）、`docs/` 全部文档、`README.md`、`LICENSE`。
 
-VueTorrent 就是那个应用包里的一块**纯前端皮肤**，和 MCP 是并列关系，不是包含关系：
-
-```
-                ┌─ VueTorrent 皮肤 ── 浏览器（8080）
-qBittorrent ────┤
-                └─ MCP 服务 ──────── AI 客户端（8081）
-```
-
-两者都只是 qBittorrent 的前端，一个面向人、一个面向 AI。
-
-### 4. 其余第三方组件
-
-| 组件 | 许可证 | 在本方案里的角色 |
-| --- | --- | --- |
-| **qBittorrent** | GPL-2.0 | 下载器本体 |
-| **[sushazhi/fnos-qbittorrent](https://github.com/sushazhi/fnos-qbittorrent)** | **GPL-2.0** | 飞牛 fnOS 版 qBittorrent 打包项目（打包者 yukihana），**内置 MCP Server**；本仓库只当客户端，不含其源码 |
-| **YTS / YTS API** | 站点服务条款 | 片源元数据，只调公开 API，不镜像不分发影视资源 |
-| **Model Context Protocol** | Anthropic 开源规范 | 通信协议 |
-| **fnos-cli** | 以原项目为准 | 操作飞牛应用授权（可选，也可用飞牛 Web UI） |
-
-### 5. 本仓库原创的部分
-
-| 文件 | 说明 |
-| --- | --- |
-| `skill/scripts/qb-mcp.sh` | MCP 客户端封装，原创。含自检、列表、添加、移动、API 透传，以及全部 14 条坑对应的处理逻辑 |
-| `docs/*.md` | 全部原创，来自实测 |
-| `README.md`、`LICENSE`、`.gitattributes` | 原创 |
-
-**不声称原创：** 上述所有第三方组件、API、协议、以及 `yts-api.sh` 的上游实现。
-
-> 代码里的 `qbittorrent-mcp 1.0.0`、`v5.3.1` 等版本号，是实测环境里跑着的版本，仅作兼容性参考，不代表本仓库维护它们。
-
----
+`yts-api.sh` 不算原创。
 
 ## License
 
