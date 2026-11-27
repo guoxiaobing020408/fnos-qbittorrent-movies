@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+# =============================================================================
+# 来源声明（重要）
+#
+# 本脚本衍生自：whoamihappyhacking/lazycat-movie-search-skill
+#   https://github.com/whoamihappyhacking/lazycat-movie-search-skill
+#
+# 该项目未附带 LICENSE 文件，按 GitHub 默认规则为「保留所有权利」。
+# 本仓库相对上游的改动：仅为 curl 增加 --connect-timeout / --max-time /
+# --retry 三项超时重试参数，其余参数解析、jq 输出逻辑与上游一致。
+#
+# 如原作者对再分发有异议，请提 Issue，本文件将立即移除。
+# =============================================================================
 set -euo pipefail
 
 BASE_URL="${YTS_API_BASE_URL:-https://movies-api.accel.li/api/v2}"
