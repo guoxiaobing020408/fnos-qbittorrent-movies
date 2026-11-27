@@ -184,30 +184,63 @@ cd skill
 
 ---
 
-## 依赖与致谢
+## 上游项目与引用说明
 
-**这个仓库只提供「客户端脚本 + 文档」，不含任何服务端代码。**
+**先说清楚哪些代码不是我的。**
 
-| 组件 | 谁做的 | 在本方案里的角色 |
+### 1. `lazycat-movie-search-skill` —— `yts-api.sh` 的出处
+
+[whoamihappyhacking/lazycat-movie-search-skill](https://github.com/whoamihappyhacking/lazycat-movie-search-skill)（37 ★）
+
+本仓库的 `skill/scripts/yts-api.sh` **衍生自该项目**，实测对比仅 7 行差异（我增加了 `--connect-timeout` / `--max-time` / `--retry` 三个参数），其余逻辑、参数解析、jq 输出格式均来自上游。
+
+`skill/SKILL.md` 的章节结构也参考了上游，但正文按实际踩坑重写了（上游讲的是 VueTorrent `.lzcx` 通道，本项目讲 qBittorrent MCP）。
+
+**⚠️ 该上游项目没有 LICENSE 文件。**
+
+GitHub 上无许可证的公开仓库，默认适用「保留所有权利」，严格来说他人**不能直接复制、修改、再分发**。本仓库作为公开项目包含这段衍生代码，存在授权瑕疵。
+
+处理建议（按稳妥程度排序）：
+
+1. 向原作者提 Issue 请其补充许可证（MIT / Apache-2.0 都行），拿到许可后本仓库直接标注即可
+2. 若不打算联系作者，把 `skill/scripts/yts-api.sh` 从本仓库移除，文档里改成"请从上游项目获取此脚本"——那样本仓库只剩原创部分，合规无虞
+3. 只自用不分发（保持仓库私有）风险最低
+
+**当前状态：已标注来源，等待作者补充许可证，或按你的判断移除该文件。**
+
+### 2. VueTorrent —— GPL-3.0
+
+[VueTorrent/VueTorrent](https://github.com/VueTorrent/VueTorrent)（7.1k ★，**GPL-3.0**）
+
+qBittorrent 的 WebUI 皮肤。本仓库：
+
+- **不分发它的任何代码**
+- 仅在文档中说明它是可选界面，以及它的 API 行为（登录、`/api/v2/*`）对本项目脚本的影响
+- 如果你把本仓库与 VueTorrent 一起分发，需遵守 GPL-3.0
+
+> 注：GPL-3.0 有传染性。但只要只是「调用它的 HTTP API」，不作代码级链接或修改分发，就不构成衍生作品。本项目属于后者。
+
+### 3. 其余第三方组件
+
+| 组件 | 许可证 | 在本方案里的角色 |
 | --- | --- | --- |
-| **`qbittorrent-mcp` 服务** | **第三方项目，非本仓库** | 把 qBittorrent WebUI API 包装成 MCP 工具的服务。本仓库只当它的客户端，不包含它的源码，也不分发它 |
-| **qBittorrent** | 开源社区（GPLv2） | 下载器本体 |
-| **YTS / YTS API** | 第三方站点 | 片源和元数据。本项目只调用其公开 API，不镜像、不缓存、不分发任何影视资源 |
-| **Model Context Protocol** | Anthropic 开源规范 | Agent 与服务之间的通信协议 |
-| **VueTorrent** | 开源项目 | qBittorrent 的 WebUI 皮肤（可选，纯界面） |
-| **fnos-cli** | 第三方 CLI 工具 | 操作飞牛应用授权的命令行入口（可选，也可用飞牛 Web UI） |
+| **qBittorrent** | GPL-2.0 | 下载器本体 |
+| **`qbittorrent-mcp` 服务** | 以原项目为准 | MCP 服务端，**本仓库不含其源码**，只当客户端 |
+| **YTS / YTS API** | 站点服务条款 | 片源元数据，只调公开 API，不镜像不分发影视资源 |
+| **Model Context Protocol** | Anthropic 开源规范 | 通信协议 |
+| **fnos-cli** | 以原项目为准 | 操作飞牛应用授权（可选，也可用飞牛 Web UI） |
 
-**本仓库原创的部分：**
+### 4. 本仓库原创的部分
 
-- `skill/scripts/qb-mcp.sh` —— MCP 客户端封装（自检、列表、添加、移动、透传），以及其中踩过的坑的处理
-- `skill/scripts/yts-api.sh` —— YTS API 的 shell 封装
-- `skill/SKILL.md` 与 `docs/` 下全部文档
+| 文件 | 说明 |
+| --- | --- |
+| `skill/scripts/qb-mcp.sh` | MCP 客户端封装，原创。含自检、列表、添加、移动、API 透传，以及全部 14 条坑对应的处理逻辑 |
+| `docs/*.md` | 全部原创，来自实测 |
+| `README.md`、`LICENSE`、`.gitattributes` | 原创 |
 
-**不是原创、也不声称原创的：** 上述所有服务端组件、API、协议。它们各自的许可证以原项目为准。
+**不声称原创：** 上述所有第三方组件、API、协议、以及 `yts-api.sh` 的上游实现。
 
-如果你在找 `qbittorrent-mcp` 的源码或部署方式，请查阅它自己的项目文档——本仓库无法代答，也不适配特定版本。`docs/01-部署.md` 里给出的只是**接口约定**（协议格式、工具签名、安全边界），按这个约定实现或对接任何兼容服务都可以。
-
-> 代码里的 `qbittorrent-mcp 1.0.0`、`v5.3.1` 这些版本号，是实测环境里跑着的版本，仅作兼容性参考，不代表本仓库维护它们。
+> 代码里的 `qbittorrent-mcp 1.0.0`、`v5.3.1` 等版本号，是实测环境里跑着的版本，仅作兼容性参考，不代表本仓库维护它们。
 
 ---
 
