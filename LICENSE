@@ -39,3 +39,8 @@ SOFTWARE.
    本仓库对该文件的改动仅为增加 HTTP 超时与重试参数。
    此文件不适用本 MIT 许可证，其授权状态以上游项目为准。
    如原作者提出异议，本仓库将立即移除该文件。
+
+5. 本项目对接的 MCP 服务出自
+   https://github.com/sushazhi/fnos-qbittorrent
+   （飞牛 fnOS 版 qBittorrent 打包项目，GPL-2.0，打包者 yukihana）。
+   本仓库仅作为该服务的客户端，不包含其源码，也不分发其 fpk 安装包。
