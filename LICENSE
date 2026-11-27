@@ -30,3 +30,12 @@ SOFTWARE.
    不被本许可证覆盖，本仓库也不分发它们。
 3. 本仓库不含任何影视资源，不提供、不镜像、不分发受版权保护的内容。
    使用者需自行确保其下载行为符合所在地法律法规及内容授权范围。
+
+例外说明（重要）：
+
+4. skill/scripts/yts-api.sh 衍生自
+   https://github.com/whoamihappyhacking/lazycat-movie-search-skill
+   该项目未提供 LICENSE 文件，默认适用「保留所有权利」。
+   本仓库对该文件的改动仅为增加 HTTP 超时与重试参数。
+   此文件不适用本 MIT 许可证，其授权状态以上游项目为准。
+   如原作者提出异议，本仓库将立即移除该文件。
