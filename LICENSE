@@ -33,12 +33,9 @@ SOFTWARE.
 
 例外说明（重要）：
 
-4. skill/scripts/yts-api.sh 衍生自
-   https://github.com/whoamihappyhacking/lazycat-movie-search-skill
-   该项目未提供 LICENSE 文件，默认适用「保留所有权利」。
-   本仓库对该文件的改动仅为增加 HTTP 超时与重试参数。
-   此文件不适用本 MIT 许可证，其授权状态以上游项目为准。
-   如原作者提出异议，本仓库将立即移除该文件。
+4. skill/scripts/yts-api.sh 与 skill/scripts/yts.py 为本仓库独立实现
+   （纯 Python 标准库，不依赖 curl / jq），不衍生自任何上游代码，
+   适用本 MIT 许可证。
 
 5. 本项目对接的 MCP 服务出自
    https://github.com/sushazhi/fnos-qbittorrent
