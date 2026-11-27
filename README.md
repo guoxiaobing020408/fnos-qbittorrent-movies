@@ -208,21 +208,36 @@ GitHub 上无许可证的公开仓库，默认适用「保留所有权利」，�
 
 **当前状态：已标注来源，等待作者补充许可证，或按你的判断移除该文件。**
 
-### 2. MCP 从哪来：它是 qBittorrent 应用包的内置功能
+### 2. MCP 从哪来：`sushazhi/fnos-qbittorrent` 这个 fpk 包内置的
 
 这一点最容易搞混，先说结论。
 
-**MCP 服务不是 VueTorrent 的功能，而是一个「第三方 qBittorrent fpk 应用包」自带的能力。**
+**MCP 服务出自 [sushazhi/fnos-qbittorrent](https://github.com/sushazhi/fnos-qbittorrent) 这个飞牛应用包，是该包的作者自己加的功能。**
 
-那个应用包（`appName: qbittorrent`，`version: 5.3.1.0`，`manualInstall: true`，非 Docker）把三样东西打在一起：
+| 项目 | 值（读取自 fpk 内的 `manifest`） |
+| --- | --- |
+| 项目地址 | https://github.com/sushazhi/fnos-qbittorrent |
+| 包名 / 版本 | `qbittorrent` / `5.3.1.0` |
+| 来源类型 | `source = thirdparty`（第三方手动安装，非应用中心） |
+| 打包分发者 | **yukihana**（GitHub: `sushazhi`） |
+| 上游 | qBittorrent 官方（`maintainer_url = github.com/qbittorrent/qBittorrent`） |
+| 许可证 | **GPL-2.0**（继承 qBittorrent） |
+| 平台 | amd64 / arm64 两个 fpk |
+| 最低系统 | fnOS `1.2.0401` |
+
+包自己的描述里就写明了下述能力：
+
+> 🤖 **MCP AI 接入**：内置 MCP Server，DeepSeek Harness / Hermes / QwenPaw / OpenClaw 等 AI 客户端可直接管理下载任务
+
+这个 fpk 把三样东西打在一起：
 
 | 打包内容 | 位置 | 作用 |
 | --- | --- | --- |
 | qBittorrent 5.3.1 本体 | `bin/` | 下载器 |
 | VueTorrent 皮肤 | `ui/vuetorrent/` | 给人看的网页界面（8080） |
-| **MCP 服务** | 应用自带进程 | 给 AI 用的接口（8081） |
+| **MCP Server** | 应用自带进程 | 给 AI 用的接口（8081） |
 
-在飞牛里打开这个 qBittorrent 应用，能看到一个 **「MCP 服务设置（AI 客户端接入）」** 的面板，里面有：
+在飞牛里打开这个 qBittorrent 应用，能看到 **「MCP 服务设置（AI 客户端接入）」** 面板：
 
 - ☑ 启用 MCP 服务
 - ☑ 允许高危操作（删除 / 停止 / 开始任务）—— 关掉后 AI 只能看和加任务
@@ -231,9 +246,11 @@ GitHub 上无许可证的公开仓库，默认适用「保留所有权利」，�
 - MCP 连接地址：`http://<你的地址>:8081/mcp`
 - 客户端配置 JSON 示例
 
-**所以：MCP 是这个应用包作者自己实现的内置功能。** 既不是 VueTorrent 的，也不是某个独立的 MCP 项目。
+**所以：MCP 是这个 fpk 应用包的功能。** 既不是 VueTorrent 的，也不是某个独立的 MCP 项目，也不是本仓库的。
 
-> 这意味着：**换一个 qBittorrent 应用包（比如应用中心那个 4.6.11），就没有 MCP 了。** 本项目依赖的正是这个内置服务，迁移时要注意。
+> ⚠️ **换应用包会丢 MCP。** 飞牛应用中心里那个 4.6.11 版的 qBittorrent 就没有这个服务，只有 `sushazhi/fnos-qbittorrent` 这个包带。本项目依赖的正是它，迁移时注意。
+
+**本仓库与该包的关系**：只做**客户端**。不包含它的源码、不分发其 fpk、不维护它。该包的问题请去它自己的 [Issues](https://github.com/sushazhi/fnos-qbittorrent/issues) 反馈。
 
 ### 3. VueTorrent 官方仓库里没有 MCP
 
@@ -258,7 +275,7 @@ qBittorrent ────┤
 | 组件 | 许可证 | 在本方案里的角色 |
 | --- | --- | --- |
 | **qBittorrent** | GPL-2.0 | 下载器本体 |
-| **内置 MCP 服务** | qBittorrent 应用包作者（第三方 fpk） | 应用自带，端口 8081，在应用设置里开关；**本仓库不含其源码**，只当客户端 |
+| **[sushazhi/fnos-qbittorrent](https://github.com/sushazhi/fnos-qbittorrent)** | **GPL-2.0** | 飞牛 fnOS 版 qBittorrent 打包项目（打包者 yukihana），**内置 MCP Server**；本仓库只当客户端，不含其源码 |
 | **YTS / YTS API** | 站点服务条款 | 片源元数据，只调公开 API，不镜像不分发影视资源 |
 | **Model Context Protocol** | Anthropic 开源规范 | 通信协议 |
 | **fnos-cli** | 以原项目为准 | 操作飞牛应用授权（可选，也可用飞牛 Web UI） |
