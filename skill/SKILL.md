@@ -19,8 +19,9 @@ description: 当用户要求搜索电影、按分辨率选片、把资源加到 
 
 - `./scripts/yts-api.sh`：搜片，输出 `.torrent` 和 `magnet`。
 - `./scripts/qb-mcp.sh`：控制 qBittorrent（自检/列表/详情/添加/启停/删除/透传）。
+- `./scripts/subtitle.sh`：字幕下载 / 转换 / 装成默认轨 / 清理临时文件。
 
-不要手写 API 请求，优先用这两个脚本。
+不要手写 API 请求，优先用这些脚本。
 
 ## 第一步：先自检
 
@@ -90,11 +91,83 @@ description: 当用户要求搜索电影、按分辨率选片、把资源加到 
 
 ### 下完发现没字幕
 
+按下表处理，**优先走第三条（脚本自动装）**：
+
 | 情况 | 处理 |
 | --- | --- |
-| 有 `Subs/Simplified.chi.srt` 但播放器没显示 | 在播放界面手动选字幕轨 |
-| 完全没字幕文件 | 换 WEB 版重下，或用影视应用的在线字幕搜索 |
-| 只有英文 `.srt` | 同上，需额外找中文字幕 |
+| 有 `Subs/Simplified.chi.srt` 但播放器没显示 | 复制成与视频同名 `.srt`，见「第六步」 |
+| 完全没字幕文件 | `subtitle.sh fetch` 下载后 `install` |
+| 只有英文 `.srt` | 补一份中文，英文改名 `.en.srt` 留备选 |
+
+## 第六步：补字幕（缺字幕 / 字幕不显示）
+
+工具：`./scripts/subtitle.sh`（纯 Python 标准库，不需要装 kp 依赖、不需要 jq）
+
+### 三种场景
+
+```bash
+# 1. 有 Subs/ 目录但播放器不自动加载 → 复制成同名默认轨
+./scripts/subtitle.sh install "<影片目录>/Subs/Simplified.chi.srt" "<影片目录>"
+
+# 2. 完全没字幕 → 从字幕库按条目 id 下载（自动解包 + 转 SRT）
+./scripts/subtitle.sh fetch 187214 -o "<工作目录>/movie.zh.srt"
+
+# 3. 装成默认轨，同时留一份繁体备选
+./scripts/subtitle.sh install "<工作目录>/movie.zh.srt" "<影片目录>" --tag cht
+```
+
+`install` 的判定逻辑：取目录里**体积最大**的视频文件，去掉扩展名生成 `同名.srt`。
+播放器按文件名匹配字幕，这就是"默认轨"的原理。
+
+**跨目录写文件一律走这个脚本**，不要手写 `cp` / `Move-Item`。
+
+### 字幕库的下载链路（别重新摸索）
+
+详情页的下载按钮是 JS 渲染，扒 HTML 拿不到直链。**能走通的只有这一条**：
+
+```
+/dld/<id> 高速下载页   →   页面里藏着 /download/<token>/svr/l0
+         ↓ 直接 GET（带 Referer）
+    裸 ASS / SRT，或 zip 包
+         ↓ subtitle.py
+   解包 → 去特效标记 → 按时间重排 → 丢弃超长注释 → 输出 SRT
+```
+
+不知道 id 就用搜索引擎定位 `zimuku.org/detail/<id>.html`，整个 URL 传给 `fetch` 也行。
+
+### 转换必须做的四件事（都是踩过的坑）
+
+| 处理 | 不做的后果 |
+| --- | --- |
+| 去 `{...}` 特效标记 | `\pos` `\fad` `\i1` 留在 SRT 里显示成乱码 |
+| `\N` `\n` → 真换行，`\h` → 空格 | 整句挤成一行 |
+| **按起始时间全量重排** | ASS 的 Dialogue 不保证有序，片尾字幕常排在第 2 条 |
+| 丢弃单条 > 20 秒的条目 | 台标、版权声明、片名卡糊住整段画面 |
+
+脚本已内置这四步，不要绕过它自己拼 SRT。
+
+### 临时文件：必须清
+
+**硬要求，不是可选项。** 转换过程会产生中间文件，不清理会一直堆在系统临时目录。
+
+| 规则 | 说明 |
+| --- | --- |
+| 中间文件只在工作目录 | 固定为系统临时目录下 `wb-subtitle/`，可用 `WB_SUBTITLE_TMP` 覆盖 |
+| 默认不落盘 | 下载内容只在内存处理；`--keep-raw` 才保存，且存到工作目录 |
+| install 后自动删源 | 源字幕若在工作目录内，装完立即删除 |
+| 跨会话残留手动清 | 见下 |
+
+```bash
+./scripts/subtitle.sh clean --list              # 先看有什么，不动手
+./scripts/subtitle.sh clean                     # 清工作目录
+./scripts/subtitle.sh clean --include-legacy    # 顺带清旧版手工脚本留下的文件
+./scripts/subtitle.sh doctor                    # 自检：临时文件是否干净
+```
+
+`clean` 的安全边界：**只删 `wb-subtitle/` 自己的工作目录**，以及 `--include-legacy`
+时按**精确文件名**匹配的旧版遗留文件。不做通配删除，不碰系统其他临时文件。
+
+任务收尾（片子下完、字幕装好）跑一次 `clean`，这是一条固定动作。
 
 ## 第四步：加任务
 
