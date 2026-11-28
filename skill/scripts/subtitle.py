@@ -124,6 +124,17 @@ def safe_remove(path):
         return False
 
 
+def tidy_workdir():
+    """工作目录空了就一并移除，不留空壳"""
+    if os.path.isdir(WORK_DIR) and not os.listdir(WORK_DIR):
+        try:
+            os.rmdir(WORK_DIR)
+            return True
+        except OSError:
+            pass
+    return False
+
+
 def http_get(url, referer=None, binary=False):
     headers = {"User-Agent": UA, "Accept": "*/*"}
     if referer:
@@ -484,6 +495,8 @@ def cmd_fetch(args):
         install(out, args.install, args.tag)
         if inside_workdir(out) and safe_remove(out):
             log("已清理临时文件：%s" % out)
+        if tidy_workdir():
+            log("工作目录已移除：%s" % WORK_DIR)
 
 
 def cmd_convert(args):
@@ -501,6 +514,7 @@ def cmd_install(args):
     if inside_workdir(args.srt):
         if safe_remove(args.srt):
             log("已清理临时文件：%s" % args.srt)
+        tidy_workdir()
     else:
         log("源字幕不在工作目录内，保留原文件：%s" % args.srt)
     return dst
