@@ -258,7 +258,8 @@ def unzip_subtitle(data, tmp_dir="/tmp"):
 # ---------------- 转换 ----------------
 
 def ts_to_ms(t):
-    m = re.match(r"\s*(\d+):(\d+):(\d+)[.:](\d+)", t)
+    # SRT 用逗号当毫秒分隔符（00:00:03,708），ASS 用点（0:00:03.71），两种都要认
+    m = re.match(r"\s*(\d+):(\d+):(\d+)[.,](\d+)", t)
     if not m:
         return 0
     h, mi, s, frac = m.groups()
@@ -326,10 +327,14 @@ def parse_srt(text):
         if idx >= len(lines) or "-->" not in lines[idx]:
             continue
         a, _, b = lines[idx].partition("-->")
-        txt = "\n".join(lines[idx + 1:]).strip()
-        if not txt:
+        raw_txt = "\n".join(lines[idx + 1:]).strip()
+        # SRT 里也常混入 ASS 标记（{\an8} 之类），一并清掉
+        raw_txt = ASS_OVERRIDE.sub("", raw_txt)
+        raw_txt = (raw_txt.replace("\\N", "\n").replace("\\n", "\n")
+                          .replace("\\h", " ").strip())
+        if not raw_txt:
             continue
-        out.append((ts_to_ms(a), ts_to_ms(b), txt))
+        out.append((ts_to_ms(a), ts_to_ms(b), raw_txt))
     return out
 
 
